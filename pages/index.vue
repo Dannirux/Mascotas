@@ -186,8 +186,7 @@ export default {
               let pos_x = 4 * (xx + yy * width_source);
               //alpha
               gx_a += weight * data[pos_x + 3];
-              weights_alpha += weight;
-              //colors
+              weights_alpha += weight
               if (data[pos_x + 3] < 255)
                 weight = weight * data[pos_x + 3] / 250;
               gx_r += weight * data[pos_x];
