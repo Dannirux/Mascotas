@@ -8,6 +8,9 @@
       <v-btn class="primary mb-2" block id="cambiar-camara" @click="cambiarCamara()">Cambiar camara</v-btn>
       <canvas id="canvas" width="400" height="400" style="max-width: 100%;"></canvas>
       <canvas v-show="false" id="otrocanvas" width="150" height="150" ></canvas>
+      <p class="text-h5 text-center black--text">
+        CNN AD - {{ pedictionCnnAd }}
+      </p>
     </v-card-text>
   </v-card>
   </v-col>
@@ -100,8 +103,8 @@ export default {
       modeloCnnDropOutAd: null,
     }
   },
-  mounted () {
-    this.initModel()
+  async mounted () {
+    await this.initModel()
     this.mostrarCamara()
   },
   methods: {
@@ -170,7 +173,7 @@ export default {
           const gris = (rojo+verde+azul)/3;
 
           arr100.push([gris]);
-          if (arr100.length == 100) {
+          if (arr100.length === 100) {
             arr.push(arr100);
             arr100 = [];
           }
