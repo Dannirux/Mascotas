@@ -1,12 +1,67 @@
 <template>
   <div >
-<v-row justify="center" align="center">
+<v-row>
   <v-col cols="12" sm="12" md="6">
-  <video id="video" playsinline autoplay style="width: 1px;"></video>
-  <v-btn class="btn btn-primary mb-2" id="cambiar-camara" @click="cambiarCamara()">Cambiar camara</v-btn>
-  <canvas id="canvas" width="400" height="400" style="max-width: 100%;"></canvas>
-  <canvas id="otrocanvas" width="150" height="150" ></canvas>
-    <p>{{ pediction }} - {{ percentage }}</p>
+  <v-card flat outlined>
+    <v-card-text>
+      <video id="video" playsinline autoplay style="width: 1px;"></video>
+      <v-btn class="primary mb-2" block id="cambiar-camara" @click="cambiarCamara()">Cambiar camara</v-btn>
+      <canvas id="canvas" width="400" height="400" style="max-width: 100%;"></canvas>
+      <canvas v-show="false" id="otrocanvas" width="150" height="150" ></canvas>
+    </v-card-text>
+  </v-card>
+  </v-col>
+  <v-col cols="12" sm="12" md="3">
+    <v-card flat outlined>
+      <v-card-title>Denso</v-card-title>
+      <v-card-text>
+        <p class="text-h3 text-center black--text">
+          {{ pediction }}
+        </p>
+      </v-card-text>
+    </v-card>
+    <v-card flat outlined class="mt-2">
+      <v-card-title>CNN</v-card-title>
+      <v-card-text>
+        <p class="text-h3 text-center black--text">
+          {{ pedictionCnn }}
+        </p>
+      </v-card-text>
+    </v-card>
+    <v-card flat outlined class="mt-2">
+      <v-card-title>CNN_Dropout</v-card-title>
+      <v-card-text>
+        <p class="text-h3 text-center black--text">
+          {{ pedictionCnnDrop }}
+        </p>
+      </v-card-text>
+    </v-card>
+  </v-col>
+  <v-col cols="12" xs="12" md="3">
+    <v-card flat outlined>
+      <v-card-title>Denso_AD</v-card-title>
+      <v-card-text>
+        <p class="text-h3 text-center black--text">
+          {{ pedictionDensoAd }}
+        </p>
+      </v-card-text>
+    </v-card>
+    <v-card flat outlined class="mt-2">
+      <v-card-title>CNN_AD</v-card-title>
+      <v-card-text>
+        <p class="text-h3 text-center black--text">
+          {{ pedictionCnnAd }}
+        </p>
+      </v-card-text>
+    </v-card>
+    <v-card flat outlined class="mt-2">
+      <v-card-title>CNN2_AD</v-card-title>
+      <v-card-text>
+        <p class="text-h3 text-center black--text">
+          {{ pedictionCnnDropAd }}
+        </p>
+      </v-card-text>
+    </v-card>
   </v-col>
 </v-row>
   </div>
@@ -18,16 +73,31 @@ export default {
   name: 'IndexPage',
   data () {
     return {
+      value: [
+        1000,
+        213,
+      ],
+      // prediccion
       facingMode: 'user',
       tamano: 400,
       currentStream: undefined,
-      modelo: null,
       video: undefined,
       canvas: undefined,
       otrocanvas: undefined,
       ctx: undefined,
-      pediction: '',
-      percentage: 0
+      pediction: '-',
+      pedictionCnn: '-',
+      pedictionCnnDrop: '-',
+      pedictionDensoAd: '-',
+      pedictionCnnAd: '-',
+      pedictionCnnDropAd: '-',
+      percentage: 0,
+      modelo: null,
+      modeloCnn: null,
+      modeloCnnDropOut: null,
+      modeloDensoAd: null,
+      modeloCnnAd: null,
+      modeloCnnDropOutAd: null,
     }
   },
   mounted () {
@@ -37,7 +107,12 @@ export default {
   methods: {
     async initModel () {
       console.log("Cargando modelo...");
-      this.modelo = await tf.loadLayersModel("/model.json");
+      this.modelo = await tf.loadLayersModel("/denso/model.json");
+      this.modeloCnn = await tf.loadLayersModel("/cnn/model.json");
+      this.modeloCnnDropOut = await tf.loadLayersModel("/cnn2/model.json");
+      this.modeloDensoAd = await tf.loadLayersModel("/densoad/model.json");
+      this.modeloCnnAd = await tf.loadLayersModel("/cnnad/model.json");
+      this.modeloCnnDropOutAd = await tf.loadLayersModel("/cnn2ad/model.json");
       console.log("Modelo cargado");
     },
     procesarCamara() {
@@ -101,18 +176,23 @@ export default {
           }
         }
 
-        arr = [arr];
+      arr = [arr];
 
-        const tensor = tf.tensor4d(arr);
-        const resultado = this.modelo.predict(tensor).dataSync();
-        if (resultado <= .3) {
-          this.pediction = "Gato";
-        } else if (resultado >= .7) {
-          this.pediction = "Perro";
-        } else {
-          this.pediction = "Indefinido";
-        }
-      this.percentage = resultado
+      const tensor = tf.tensor4d(arr);
+      const resultDenso = this.modelo.predict(tensor).dataSync();
+      const resultCnn = this.modeloCnn.predict(tensor).dataSync();
+      const resultCnnDrop = this.modeloCnnDropOut.predict(tensor).dataSync();
+      const resultDensoAd = this.modeloDensoAd.predict(tensor).dataSync();
+      const resultCnnAd = this.modeloCnnAd.predict(tensor).dataSync();
+      const resultCnnDropAd = this.modeloCnnDropOutAd.predict(tensor).dataSync();
+      resultDenso <= .5 ? this.pediction = "Gato" : this.pediction = "Perro"
+      resultCnn <= .5 ? this.pedictionCnn = "Gato" : this.pedictionCnn = "Perro"
+      resultCnnDrop <= .5 ? this.pedictionCnnDrop = "Gato" : this.pedictionCnnDrop = "Perro"
+      resultDensoAd <= .5 ? this.pedictionDensoAd = "Gato" : this.pedictionDensoAd = "Perro"
+      resultCnnAd <= .5 ? this.pedictionCnnAd = "Gato" : this.pedictionCnnAd = "Perro"
+      resultCnnDropAd <= .5 ? this.pedictionCnnDropAd = "Gato" : this.pedictionCnnDropAd = "Perro"
+
+     // this.percentage = resultado
       setTimeout(this.predecir, 150)
     },
     cambiarCamara() {
