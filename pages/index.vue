@@ -5,7 +5,7 @@
   <v-card flat outlined>
     <v-card-text>
       <video id="video" playsinline autoplay style="width: 1px;"></video>
-      <v-btn class="primary mb-2" block id="cambiar-camara" @click="cambiarCamara()">Cambiar camara</v-btn>
+      <v-btn class="primary mb-2" block id="cambiar-camara" @click="cambiarCamara()"><v-icon>mdi-camera-party-mode</v-icon>Cambiar camara</v-btn>
       <canvas id="canvas" width="400" height="400" style="max-width: 100%;"></canvas>
       <canvas v-show="false" id="otrocanvas" width="150" height="150" ></canvas>
       <p class="text-h5 text-center black--text">
@@ -23,7 +23,7 @@
         </p>
       </v-card-text>
     </v-card>
-    <v-card flat outlined class="mt-2">
+    <v-card v-if="!$vuetify.breakpoint.smAndDown" flat outlined class="mt-2">
       <v-card-title>CNN</v-card-title>
       <v-card-text>
         <p class="text-h3 text-center black--text">
@@ -41,7 +41,7 @@
     </v-card>
   </v-col>
   <v-col cols="12" xs="12" md="3">
-    <v-card flat outlined>
+    <v-card v-if="!$vuetify.breakpoint.smAndDown" flat outlined>
       <v-card-title>Denso_AD</v-card-title>
       <v-card-text>
         <p class="text-h3 text-center black--text">
@@ -58,7 +58,7 @@
       </v-card-text>
     </v-card>
     <v-card flat outlined class="mt-2">
-      <v-card-title>CNN2_AD</v-card-title>
+      <v-card-title>CNN_Dropout_AD</v-card-title>
       <v-card-text>
         <p class="text-h3 text-center black--text">
           {{ pedictionCnnDropAd }}
@@ -67,6 +67,12 @@
     </v-card>
   </v-col>
 </v-row>
+    <v-overlay :value="overlay">
+      <v-progress-circular
+        indeterminate
+        size="64"
+      ></v-progress-circular>
+    </v-overlay>
   </div>
 </template>
 
@@ -76,6 +82,7 @@ export default {
   name: 'IndexPage',
   data () {
     return {
+      overlay: false,
       value: [
         1000,
         213,
@@ -110,12 +117,16 @@ export default {
   methods: {
     async initModel () {
       console.log("Cargando modelo...");
+      this.overlay = true
       this.modelo = await tf.loadLayersModel("/denso/model.json");
-      this.modeloCnn = await tf.loadLayersModel("/cnn/model.json");
       this.modeloCnnDropOut = await tf.loadLayersModel("/cnn2/model.json");
-      this.modeloDensoAd = await tf.loadLayersModel("/densoad/model.json");
+      if (!this.$vuetify.breakpoint.smAndDown) {
+        this.modeloCnn = await tf.loadLayersModel("/cnn/model.json");
+        this.modeloDensoAd = await tf.loadLayersModel("/densoad/model.json");
+      }
       this.modeloCnnAd = await tf.loadLayersModel("/cnnad/model.json");
       this.modeloCnnDropOutAd = await tf.loadLayersModel("/cnn2ad/model.json");
+      this.overlay = false
       console.log("Modelo cargado");
     },
     procesarCamara() {
@@ -123,7 +134,6 @@ export default {
       setTimeout(this.procesarCamara, 20);
     },
     mostrarCamara() {
-      console.log('document.querySelector(".video")', document.querySelector("#video"))
       this.video = document.querySelector("#video")
       this.canvas = document.querySelector("#canvas")
       this.otrocanvas = document.querySelector("#otrocanvas")
@@ -138,7 +148,6 @@ export default {
       if (navigator.mediaDevices.getUserMedia) {
         navigator.mediaDevices.getUserMedia(opciones)
           .then(localMediaStream => {
-            console.log(localMediaStream);
             this.currentStream = localMediaStream
             this.video.srcObject = localMediaStream;
             this.procesarCamara()
@@ -147,7 +156,6 @@ export default {
           })
           .catch(function(err) {
             alert("No se pudo utilizar la camara :(");
-            console.log(err);
             alert(err);
           })
       } else {
@@ -183,15 +191,17 @@ export default {
 
       const tensor = tf.tensor4d(arr);
       const resultDenso = this.modelo.predict(tensor).dataSync();
-      const resultCnn = this.modeloCnn.predict(tensor).dataSync();
       const resultCnnDrop = this.modeloCnnDropOut.predict(tensor).dataSync();
-      const resultDensoAd = this.modeloDensoAd.predict(tensor).dataSync();
+      if (!this.$vuetify.breakpoint.smAndDown) {
+        const resultDensoAd = this.modeloDensoAd.predict(tensor).dataSync();
+        resultDensoAd <= .5 ? this.pedictionDensoAd = "Gato" : this.pedictionDensoAd = "Perro"
+        const resultCnn = this.modeloCnn.predict(tensor).dataSync();
+        resultCnn <= .5 ? this.pedictionCnn = "Gato" : this.pedictionCnn = "Perro"
+      }
       const resultCnnAd = this.modeloCnnAd.predict(tensor).dataSync();
       const resultCnnDropAd = this.modeloCnnDropOutAd.predict(tensor).dataSync();
       resultDenso <= .5 ? this.pediction = "Gato" : this.pediction = "Perro"
-      resultCnn <= .5 ? this.pedictionCnn = "Gato" : this.pedictionCnn = "Perro"
       resultCnnDrop <= .5 ? this.pedictionCnnDrop = "Gato" : this.pedictionCnnDrop = "Perro"
-      resultDensoAd <= .5 ? this.pedictionDensoAd = "Gato" : this.pedictionDensoAd = "Perro"
       resultCnnAd <= .5 ? this.pedictionCnnAd = "Gato" : this.pedictionCnnAd = "Perro"
       resultCnnDropAd <= .5 ? this.pedictionCnnDropAd = "Gato" : this.pedictionCnnDropAd = "Perro"
 
@@ -221,7 +231,6 @@ export default {
         })
     },
     resamplesingle(canvas, width, height, resize_canvas) {
-      console.log('resample', canvas)
       const width_source = canvas.width;
       const height_source = canvas.height;
       width = Math.round(width);
