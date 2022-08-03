@@ -9,7 +9,7 @@
       <canvas id="canvas" width="400" height="400" style="max-width: 100%;"></canvas>
       <canvas v-show="false" id="otrocanvas" width="150" height="150" ></canvas>
       <p class="text-h5 text-center black--text">
-        CNN AD - {{ pedictionCnnAd }}
+        AlexNet AD - {{ pedictionAlexAd }}
       </p>
     </v-card-text>
   </v-card>
@@ -31,7 +31,7 @@
         </p>
       </v-card-text>
     </v-card>
-    <v-card flat outlined class="mt-2">
+    <v-card v-if="!$vuetify.breakpoint.smAndDown" flat outlined class="mt-2">
       <v-card-title>CNN_Dropout</v-card-title>
       <v-card-text>
         <p class="text-h3 text-center black--text">
@@ -57,7 +57,7 @@
         </p>
       </v-card-text>
     </v-card>
-    <v-card flat outlined class="mt-2">
+    <v-card  v-if="!$vuetify.breakpoint.smAndDown" flat outlined class="mt-2">
       <v-card-title>CNN_Dropout_AD</v-card-title>
       <v-card-text>
         <p class="text-h3 text-center black--text">
@@ -67,7 +67,7 @@
     </v-card>
   </v-col>
   <v-col cols="12" xs="12" md="2">
-    <v-card v-if="!$vuetify.breakpoint.smAndDown" flat outlined>
+    <v-card flat outlined>
       <v-card-title>AlexNet</v-card-title>
       <v-card-text>
         <p class="text-h3 text-center black--text">
@@ -155,9 +155,9 @@ export default {
         this.modeloCnnDropOut = await tf.loadLayersModel("/cnn2/model.json");
         this.modeloCnn = await tf.loadLayersModel("/cnn/model.json");
         this.modeloDensoAd = await tf.loadLayersModel("/densoad/model.json");
+        this.modeloCnnDropOutAd = await tf.loadLayersModel("/cnn2ad/model.json");
       }
       this.modeloCnnAd = await tf.loadLayersModel("/cnnad/model.json");
-      this.modeloCnnDropOutAd = await tf.loadLayersModel("/cnn2ad/model.json");
       this.modeloAlex = await tf.loadLayersModel("/AlexNetCNN/model.json");
       this.modeloAlexAD = await tf.loadLayersModel("/AlexNetCNNAD/model.json");
       //this.modeloAlexDropOutAd = await tf.loadLayersModel("/AlexNetCNNDropAD/model.json");
@@ -235,11 +235,11 @@ export default {
         resultDensoAd <= .5 ? this.pedictionDensoAd = "Gato" : this.pedictionDensoAd = "Perro"
         const resultCnn = this.modeloCnn.predict(tensor).dataSync();
         resultCnn <= .5 ? this.pedictionCnn = "Gato" : this.pedictionCnn = "Perro"
+        const resultCnnDropAd = this.modeloCnnDropOutAd.predict(tensor).dataSync();
+        resultCnnDropAd <= .5 ? this.pedictionCnnDropAd = "Gato" : this.pedictionCnnDropAd = "Perro"
       }
       const resultCnnAd = this.modeloCnnAd.predict(tensor).dataSync();
       resultCnnAd <= .5 ? this.pedictionCnnAd = "Gato" : this.pedictionCnnAd = "Perro"
-      const resultCnnDropAd = this.modeloCnnDropOutAd.predict(tensor).dataSync();
-      resultCnnDropAd <= .5 ? this.pedictionCnnDropAd = "Gato" : this.pedictionCnnDropAd = "Perro"
       const resultAlex = this.modeloAlex.predict(tensor).dataSync();
       resultAlex <= .5 ? this.pedictionAlex = "Gato" : this.pedictionAlex = "Perro"
       const resultAlexAD = this.modeloAlexAD.predict(tensor).dataSync();
