@@ -14,7 +14,7 @@
     </v-card-text>
   </v-card>
   </v-col>
-  <v-col cols="12" sm="12" md="3">
+  <v-col cols="12" sm="12" md="2">
     <v-card flat outlined>
       <v-card-title>Denso</v-card-title>
       <v-card-text>
@@ -40,7 +40,7 @@
       </v-card-text>
     </v-card>
   </v-col>
-  <v-col cols="12" xs="12" md="3">
+  <v-col cols="12" xs="12" md="2">
     <v-card v-if="!$vuetify.breakpoint.smAndDown" flat outlined>
       <v-card-title>Denso_AD</v-card-title>
       <v-card-text>
@@ -65,6 +65,32 @@
         </p>
       </v-card-text>
     </v-card>
+  </v-col>
+  <v-col cols="12" xs="12" md="2">
+    <v-card v-if="!$vuetify.breakpoint.smAndDown" flat outlined>
+      <v-card-title>AlexNet</v-card-title>
+      <v-card-text>
+        <p class="text-h3 text-center black--text">
+          {{ pedictionAlex }}
+        </p>
+      </v-card-text>
+    </v-card>
+    <v-card flat outlined class="mt-2">
+      <v-card-title>AlexNet_AD</v-card-title>
+      <v-card-text>
+        <p class="text-h3 text-center black--text">
+          {{ pedictionAlexAd }}
+        </p>
+      </v-card-text>
+    </v-card>
+    <!-- <v-card flat outlined class="mt-2">
+      <v-card-title>AlexNet_Dropout_AD</v-card-title>
+      <v-card-text>
+        <p class="text-h3 text-center black--text">
+          {{ pedictionAlexDropAd }}
+        </p>
+      </v-card-text>
+    </v-card> -->
   </v-col>
 </v-row>
     <v-overlay :value="overlay">
@@ -101,6 +127,9 @@ export default {
       pedictionDensoAd: '-',
       pedictionCnnAd: '-',
       pedictionCnnDropAd: '-',
+      pedictionAlex: '-',
+      pedictionAlexAd: '-',
+      pedictionAlexDropAd: '-',
       percentage: 0,
       modelo: null,
       modeloCnn: null,
@@ -108,6 +137,9 @@ export default {
       modeloDensoAd: null,
       modeloCnnAd: null,
       modeloCnnDropOutAd: null,
+      modeloAlex: null,
+      modeloAlexAD: null,
+      modeloAlexDropOutAd: null,
     }
   },
   async mounted () {
@@ -119,13 +151,17 @@ export default {
       console.log("Cargando modelo...");
       this.overlay = true
       this.modelo = await tf.loadLayersModel("/denso/model.json");
-      this.modeloCnnDropOut = await tf.loadLayersModel("/cnn2/model.json");
       if (!this.$vuetify.breakpoint.smAndDown) {
+        this.modeloCnnDropOut = await tf.loadLayersModel("/cnn2/model.json");
         this.modeloCnn = await tf.loadLayersModel("/cnn/model.json");
         this.modeloDensoAd = await tf.loadLayersModel("/densoad/model.json");
       }
       this.modeloCnnAd = await tf.loadLayersModel("/cnnad/model.json");
       this.modeloCnnDropOutAd = await tf.loadLayersModel("/cnn2ad/model.json");
+      this.modeloAlex = await tf.loadLayersModel("/AlexNetCNN/model.json");
+      this.modeloAlexAD = await tf.loadLayersModel("/AlexNetCNNAD/model.json");
+      //this.modeloAlexDropOutAd = await tf.loadLayersModel("/AlexNetCNNDropAD/model.json");
+      //this.modeloCnnDropOutAd = await tf.loadLayersModel("/cnn2ad/model.json");
       this.overlay = false
       console.log("Modelo cargado");
     },
@@ -191,21 +227,27 @@ export default {
 
       const tensor = tf.tensor4d(arr);
       const resultDenso = this.modelo.predict(tensor).dataSync();
-      const resultCnnDrop = this.modeloCnnDropOut.predict(tensor).dataSync();
+      resultDenso <= .5 ? this.pediction = "Gato" : this.pediction = "Perro"
       if (!this.$vuetify.breakpoint.smAndDown) {
+        const resultCnnDrop = this.modeloCnnDropOut.predict(tensor).dataSync();
+        resultCnnDrop <= .5 ? this.pedictionCnnDrop = "Gato" : this.pedictionCnnDrop = "Perro"
         const resultDensoAd = this.modeloDensoAd.predict(tensor).dataSync();
         resultDensoAd <= .5 ? this.pedictionDensoAd = "Gato" : this.pedictionDensoAd = "Perro"
         const resultCnn = this.modeloCnn.predict(tensor).dataSync();
         resultCnn <= .5 ? this.pedictionCnn = "Gato" : this.pedictionCnn = "Perro"
       }
       const resultCnnAd = this.modeloCnnAd.predict(tensor).dataSync();
-      const resultCnnDropAd = this.modeloCnnDropOutAd.predict(tensor).dataSync();
-      resultDenso <= .5 ? this.pediction = "Gato" : this.pediction = "Perro"
-      resultCnnDrop <= .5 ? this.pedictionCnnDrop = "Gato" : this.pedictionCnnDrop = "Perro"
       resultCnnAd <= .5 ? this.pedictionCnnAd = "Gato" : this.pedictionCnnAd = "Perro"
+      const resultCnnDropAd = this.modeloCnnDropOutAd.predict(tensor).dataSync();
       resultCnnDropAd <= .5 ? this.pedictionCnnDropAd = "Gato" : this.pedictionCnnDropAd = "Perro"
+      const resultAlex = this.modeloAlex.predict(tensor).dataSync();
+      resultAlex <= .5 ? this.pedictionAlex = "Gato" : this.pedictionAlex = "Perro"
+      const resultAlexAD = this.modeloAlexAD.predict(tensor).dataSync();
+      resultAlexAD <= .5 ? this.pedictionAlexAd = "Gato" : this.pedictionAlexAd = "Perro"
+      // const resultAlexDropAD = this.modeloAlexDropOutAd.predict(tensor).dataSync();
+      // resultAlexDropAD <= .5 ? this.pedictionAlexDropAd = "Gato" : this.pedictionAlexDropAd = "Perro"
 
-     // this.percentage = resultado
+      //this.percentage = resultado
       setTimeout(this.predecir, 150)
     },
     cambiarCamara() {
